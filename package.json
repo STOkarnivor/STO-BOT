@@ -1,0 +1,17 @@
+{
+  "name": "sto-discord-bot",
+  "version": "1.0.0",
+  "description": "STO GVG Timer Discord Bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "@discordjs/voice": "^0.19.1",
+    "opusscript": "^0.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

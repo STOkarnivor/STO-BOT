@@ -35,28 +35,43 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
   ],
 });
-// Diagnostic: Check voice dependencies
+
+// ========================================
+// DIAGNOSTIC: Check voice dependencies
+// ========================================
 console.log('🔍 Checking voice dependencies...');
+
 try {
   require('@discordjs/opus');
   console.log('✅ @discordjs/opus found');
 } catch (e) {
-  console.log('❌ @discordjs/opus missing:', e.message);
+  console.log('❌ @discordjs/opus missing');
 }
 
 try {
   require('sodium-native');
   console.log('✅ sodium-native found');
 } catch (e) {
-  console.log('❌ sodium-native missing:', e.message);
+  console.log('❌ sodium-native missing');
 }
 
 try {
-  const { getVoiceConnection } = require('@discordjs/voice');
-  console.log('✅ @discordjs/voice loaded');
+  require('opusscript');
+  console.log('✅ opusscript found');
 } catch (e) {
-  console.log('❌ @discordjs/voice error:', e.message);
+  console.log('❌ opusscript missing');
 }
+
+try {
+  require('libsodium-wrappers');
+  console.log('✅ libsodium-wrappers found');
+} catch (e) {
+  console.log('❌ libsodium-wrappers missing');
+}
+
+console.log('✅ @discordjs/voice loaded');
+console.log('========================================');
+
 let currentConnection = null;
 let announcementCheckInterval = null;
 let lastAnnouncedMinute = -1;
@@ -246,6 +261,8 @@ client.on('interactionCreate', async interaction => {
         return interaction.editReply('❌ Join a voice channel first!');
       }
       
+      console.log(`🎙️ Attempting to join voice channel: ${voiceChannel.name}`);
+      
       const res = await fetch(`${API_URL}/api/match/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -258,6 +275,7 @@ client.on('interactionCreate', async interaction => {
       if (res.ok) {
         if (currentConnection) currentConnection.destroy();
         
+        console.log('🔗 Creating voice connection...');
         currentConnection = joinVoiceChannel({
           channelId: voiceChannel.id,
           guildId: interaction.guildId,
@@ -265,20 +283,35 @@ client.on('interactionCreate', async interaction => {
         });
         
         currentConnection.on(VoiceConnectionStatus.Ready, () => {
-          console.log('🎤 Voice ready');
+          console.log('🎤 Voice connection ready!');
+        });
+        
+        currentConnection.on(VoiceConnectionStatus.Connecting, () => {
+          console.log('🔄 Voice connecting...');
+        });
+        
+        currentConnection.on(VoiceConnectionStatus.Signalling, () => {
+          console.log('📡 Voice signalling...');
         });
         
         currentConnection.on('error', error => {
-          console.error('❌ Voice error:', error.message);
+          console.error('❌ Voice connection error:', error);
+        });
+        
+        currentConnection.on('stateChange', (oldState, newState) => {
+          console.log(`🔄 Voice state: ${oldState.status} → ${newState.status}`);
         });
         
         try {
+          console.log('⏳ Waiting for voice connection (20s timeout)...');
           await entersState(currentConnection, VoiceConnectionStatus.Ready, 20_000);
+          console.log('✅ Voice connected successfully!');
           startAnnouncementChecking();
           await interaction.editReply(`✅ **${timerName}** started! 🎤`);
         } catch (error) {
-          console.error('❌ Voice connection failed:', error.message);
-          await interaction.editReply(`❌ Voice failed: ${error.message}`);
+          console.error('❌ Voice connection timeout:', error.message);
+          console.error('Current connection state:', currentConnection.state.status);
+          await interaction.editReply(`❌ Voice connection timed out. Check bot permissions and try again.`);
           if (currentConnection) {
             currentConnection.destroy();
             currentConnection = null;
@@ -322,4 +355,3 @@ client.on('interactionCreate', async interaction => {
 
 client.login(DISCORD_BOT_TOKEN);
 console.log('🚀 Starting bot...');
-

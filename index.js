@@ -5,9 +5,9 @@
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
 const https = require('https');
-const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 
 // Create HTTP server to satisfy Render's port requirement
 const server = http.createServer((req, res) => {
@@ -247,17 +247,24 @@ client.on('interactionCreate', async interaction => {
           console.log('🎤 Voice ready');
         });
         
-       try {
-  await entersState(currentConnection, VoiceConnectionStatus.Ready, 30_000);
-  startAnnouncementChecking();
-  await interaction.editReply(`✅ **${timerName}** started! 🎤`);
-} catch (error) {
-  console.error('❌ Voice connection error details:', error);
-  console.error('Error name:', error.name);
-  console.error('Error message:', error.message);
-  console.error('Error stack:', error.stack);
-  await interaction.editReply(`❌ Voice connection failed: ${error.message}`);
-}
+        currentConnection.on('error', error => {
+          console.error('❌ Voice connection error:', error);
+        });
+        
+        try {
+          await entersState(currentConnection, VoiceConnectionStatus.Ready, 30_000);
+          startAnnouncementChecking();
+          await interaction.editReply(`✅ **${timerName}** started! 🎤`);
+        } catch (error) {
+          console.error('❌ Voice connection error details:', error);
+          console.error('Error name:', error.name);
+          console.error('Error message:', error.message);
+          await interaction.editReply(`❌ Voice connection failed: ${error.message}`);
+        }
+      } else {
+        const error = await res.json();
+        await interaction.editReply(`❌ ${error.error || 'Failed'}`);
+      }
     }
     
     else if (interaction.commandName === 'stop') {
@@ -292,4 +299,3 @@ client.on('interactionCreate', async interaction => {
 
 client.login(DISCORD_BOT_TOKEN);
 console.log('🚀 Starting bot...');
-

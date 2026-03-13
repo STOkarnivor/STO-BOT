@@ -42,17 +42,10 @@ const client = new Client({
 console.log('🔍 Checking voice dependencies...');
 
 try {
-  require('@discordjs/opus');
-  console.log('✅ @discordjs/opus found');
+  require('libsodium-wrappers');
+  console.log('✅ libsodium-wrappers found');
 } catch (e) {
-  console.log('❌ @discordjs/opus missing');
-}
-
-try {
-  require('sodium-native');
-  console.log('✅ sodium-native found');
-} catch (e) {
-  console.log('❌ sodium-native missing');
+  console.log('❌ libsodium-wrappers missing');
 }
 
 try {
@@ -63,10 +56,17 @@ try {
 }
 
 try {
-  require('libsodium-wrappers');
-  console.log('✅ libsodium-wrappers found');
+  require('tweetnacl');
+  console.log('✅ tweetnacl found');
 } catch (e) {
-  console.log('❌ libsodium-wrappers missing');
+  console.log('❌ tweetnacl missing');
+}
+
+try {
+  require('ffmpeg-static');
+  console.log('✅ ffmpeg-static found');
+} catch (e) {
+  console.log('❌ ffmpeg-static missing');
 }
 
 console.log('✅ @discordjs/voice loaded');

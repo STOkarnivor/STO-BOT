@@ -247,17 +247,17 @@ client.on('interactionCreate', async interaction => {
           console.log('🎤 Voice ready');
         });
         
-        try {
-          await entersState(currentConnection, VoiceConnectionStatus.Ready, 30_000);
-          startAnnouncementChecking();
-          await interaction.editReply(`✅ **${timerName}** started! 🎤`);
-        } catch (error) {
-          await interaction.editReply('❌ Voice connection failed');
-        }
-      } else {
-        const error = await res.json();
-        await interaction.editReply(`❌ ${error.error || 'Failed'}`);
-      }
+       try {
+  await entersState(currentConnection, VoiceConnectionStatus.Ready, 30_000);
+  startAnnouncementChecking();
+  await interaction.editReply(`✅ **${timerName}** started! 🎤`);
+} catch (error) {
+  console.error('❌ Voice connection error details:', error);
+  console.error('Error name:', error.name);
+  console.error('Error message:', error.message);
+  console.error('Error stack:', error.stack);
+  await interaction.editReply(`❌ Voice connection failed: ${error.message}`);
+}
     }
     
     else if (interaction.commandName === 'stop') {
@@ -292,3 +292,4 @@ client.on('interactionCreate', async interaction => {
 
 client.login(DISCORD_BOT_TOKEN);
 console.log('🚀 Starting bot...');
+

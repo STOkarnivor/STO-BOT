@@ -200,6 +200,105 @@ client.once('ready', async () => {
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
   
+  // DEFER IMMEDIATELY to prevent timeout
+  try {
+    await interaction.deferReply();
+  } catch (error) {
+    console.error('❌ Failed to defer reply:', error.message);
+    return;
+  }
+  
+  const hasPermission = 
+    interaction.member.permissions.has('Administrator') ||
+    interaction.member.roles.cache.some(role => role.name === 'GVG SHOT-CALLER');
+  
+  if (!hasPermission) {
+    return interaction.editReply('❌ You need "GVG SHOT-CALLER" role or admin.');
+  }
+
+  try {
+    if (interaction.commandName === 'timer') {
+      const timerName = interaction.options.getString('name');
+      const voiceChannel = interaction.member.voice.channel;
+      
+      if (!voiceChannel) {
+        return interaction.editReply('❌ Join a voice channel first!');
+      }
+      
+      const res = await fetch(`${API_URL}/api/match/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          timer_name: timerName,
+          voice_channel_id: voiceChannel.id 
+        })
+      });
+      
+      if (res.ok) {
+        if (currentConnection) currentConnection.destroy();
+        
+        currentConnection = joinVoiceChannel({
+          channelId: voiceChannel.id,
+          guildId: interaction.guildId,
+          adapterCreator: interaction.guild.voiceAdapterCreator,
+        });
+        
+        currentConnection.on(VoiceConnectionStatus.Ready, () => {
+          console.log('🎤 Voice ready');
+        });
+        
+        currentConnection.on('error', error => {
+          console.error('❌ Voice error:', error.message);
+        });
+        
+        try {
+          await entersState(currentConnection, VoiceConnectionStatus.Ready, 20_000);
+          startAnnouncementChecking();
+          await interaction.editReply(`✅ **${timerName}** started! 🎤`);
+        } catch (error) {
+          console.error('❌ Voice connection failed:', error.message);
+          await interaction.editReply(`❌ Voice failed: ${error.message}`);
+          if (currentConnection) {
+            currentConnection.destroy();
+            currentConnection = null;
+          }
+        }
+      } else {
+        const error = await res.json();
+        await interaction.editReply(`❌ ${error.error || 'Failed to start timer'}`);
+      }
+    }
+    
+    else if (interaction.commandName === 'stop') {
+      await fetch(`${API_URL}/api/match/stop`, { method: 'POST' });
+      stopAnnouncementChecking();
+      if (currentConnection) {
+        currentConnection.destroy();
+        currentConnection = null;
+      }
+      await interaction.editReply('⏹️ Timer stopped!');
+    }
+    
+    else if (interaction.commandName === 'status') {
+      const res = await fetch(`${API_URL}/api/match/active`);
+      const data = await res.json();
+      
+      if (data && data.is_running) {
+        await interaction.editReply(`⏱️ **${data.timer_name}** - ${data.elapsed_minutes} minutes elapsed`);
+      } else {
+        await interaction.editReply('ℹ️ No active timer');
+      }
+    }
+  } catch (error) {
+    console.error('❌ Command error:', error.message);
+    try {
+      await interaction.editReply(`❌ Error: ${error.message}`);
+    } catch (e) {
+      console.error('❌ Could not send error message:', e.message);
+    }
+  }
+});
+  
   const hasPermission = 
     interaction.member.permissions.has('Administrator') ||
     interaction.member.roles.cache.some(role => role.name === 'GVG SHOT-CALLER');
@@ -299,3 +398,4 @@ client.on('interactionCreate', async interaction => {
 
 client.login(DISCORD_BOT_TOKEN);
 console.log('🚀 Starting bot...');
+

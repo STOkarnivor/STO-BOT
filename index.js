@@ -5,11 +5,11 @@
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
 const https = require('https');
+const http = require('http');
 const fs = require('fs');
 const path = require('path');
- const http = require('http');
 
-// Create a simple HTTP server to satisfy Render's port requirement
+// Create HTTP server to satisfy Render's port requirement
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('Discord bot is running!\n');
@@ -19,6 +19,7 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🌐 HTTP server listening on port ${PORT}`);
 });
+
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const API_URL = process.env.API_URL || 'https://182a5878-23b3-4680-8feb-f8d982648ab0.web.createdevserver.com';
 
@@ -290,5 +291,4 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(DISCORD_BOT_TOKEN);
-
 console.log('🚀 Starting bot...');

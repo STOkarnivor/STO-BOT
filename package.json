@@ -9,7 +9,9 @@
   "dependencies": {
     "discord.js": "^14.16.3",
     "@discordjs/voice": "^0.19.1",
-    "opusscript": "^0.1.1"
+    "opusscript": "^0.1.1",
+    "sodium-native": "^4.0.10",
+    "ffmpeg-static": "^5.2.0"
   },
   "engines": {
     "node": ">=18.0.0"

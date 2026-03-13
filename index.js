@@ -35,7 +35,28 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
   ],
 });
+// Diagnostic: Check voice dependencies
+console.log('🔍 Checking voice dependencies...');
+try {
+  require('@discordjs/opus');
+  console.log('✅ @discordjs/opus found');
+} catch (e) {
+  console.log('❌ @discordjs/opus missing:', e.message);
+}
 
+try {
+  require('sodium-native');
+  console.log('✅ sodium-native found');
+} catch (e) {
+  console.log('❌ sodium-native missing:', e.message);
+}
+
+try {
+  const { getVoiceConnection } = require('@discordjs/voice');
+  console.log('✅ @discordjs/voice loaded');
+} catch (e) {
+  console.log('❌ @discordjs/voice error:', e.message);
+}
 let currentConnection = null;
 let announcementCheckInterval = null;
 let lastAnnouncedMinute = -1;
@@ -301,3 +322,4 @@ client.on('interactionCreate', async interaction => {
 
 client.login(DISCORD_BOT_TOKEN);
 console.log('🚀 Starting bot...');
+
